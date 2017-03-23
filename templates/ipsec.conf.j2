@@ -7,9 +7,10 @@ config setup
 	# klipsdebug=none
 	# plutodebug="control parsing"
 	# For Red Hat Enterprise Linux and Fedora, leave protostack=netkey
-	{% for key, value in openswan_config_options.iteritems() %}
-	{{ key }}={{ value }}
-	{% endfor %}
+	protostack=netkey
+        nat_traversal=yes
+        virtual_private=
+        oe=off
 	# Enable this if you see "failed to find any available worker"
 	# nhelpers=0
 

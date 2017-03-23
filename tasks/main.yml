@@ -5,6 +5,11 @@
   package:
     name: openswan
     state: present
+  when: ansible_distribution != "Amazon"
+
+- name: install system updates for amazon distros
+  yum: name=openswan state=latest
+  when: ansible_distribution == "Amazon"
 
 - name: render template /etc/ipsec.conf
   template:
@@ -47,11 +52,28 @@
   with_dict: "{{ openswan_connections }}"
   when:
     - openswan_manage_secrets
-    - item.value.psk_string is defined
+    - item.value.psk is defined
   notify: restart ipsec service
   tags:
     - config
     - secrets
+
+- name: Setup network for openswan
+  shell: |
+    echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
+    echo 0 > /proc/sys/net/ipv4/conf/all/send_redirects
+    echo 0 > /proc/sys/net/ipv4/conf/default/send_redirects
+    echo 0 > /proc/sys/net/ipv4/conf/eth0/send_redirects
+    echo 0 > /proc/sys/net/ipv4/conf/lo/send_redirects
+    echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects
+    echo 0 > /proc/sys/net/ipv4/conf/default/accept_redirects
+    echo 0 > /proc/sys/net/ipv4/conf/eth0/accept_redirects
+    echo 0 > /proc/sys/net/ipv4/conf/lo/accept_redirects
+
+- name: Restart network
+  service:
+    name: network
+    state: restarted
 
 - name: enable and start ipsec service
   service:
